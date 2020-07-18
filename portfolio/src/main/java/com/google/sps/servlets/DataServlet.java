@@ -20,61 +20,87 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.SortDirection;
+import com.google.cloud.translate.Translate;
+import com.google.cloud.translate.TranslateOptions;
+import com.google.cloud.translate.Translation;
 import com.google.gson.Gson;
-import com.google.sps.servlets.Comment;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
+import java.io.*; 
 
 /** Servlet that returns some example content. TODO: modify this file to handle comments data */
-@WebServlet("/data")
+@WebServlet("/comments")
 public class DataServlet extends HttpServlet {
-  @Override
-  public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    Query query = new Query("Comment").addSort("time", SortDirection.DESCENDING);
+    @Override
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String lang = request.getParameter("lang");
+        Query query = new Query("Comment").addSort("timestamp", SortDirection.ASCENDING);
 
-    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-    PreparedQuery results = datastore.prepare(query);
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        PreparedQuery results = datastore.prepare(query);
 
-    List<Comment> comments = new ArrayList<>();
-    for (Entity entity : results.asIterable()) {
-      //long id = entity.getKey().getId();
-      String text = (String) entity.getProperty("text");
-      long time = (long) entity.getProperty("time");
+        // Do the translation.
+        Translate translate = TranslateOptions.getDefaultInstance().getService();
 
-      Comment m = new Comment(1226, text, time);
-      comments.add(m);
+        ArrayList<String> comments = new ArrayList<>();
+        for (Entity entity : results.asIterable()) {
+            long id = entity.getKey().getId();
+            String text = (String) entity.getProperty("text");
+            long timestamp = (long) entity.getProperty("timestamp");
+            String comment = text;
+            //comments.add(comment);
+
+            if(lang.length()>0){
+                Translation translation =
+                translate.translate(comment, Translate.TranslateOption.targetLanguage(lang));
+                String translatedText = translation.getTranslatedText();
+                comments.add(translatedText);
+            } else {
+                comments.add(comment);
+            }
+        }
+
+        response.setContentType("application/json; charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        String json = convertToJson(comments);
+        response.getWriter().println(json);
     }
-    Gson gson = new Gson();
 
-    response.setContentType("application/json;");
-    response.getWriter().println(gson.toJson(comments));
-  }
+    @Override
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        // Get the input from the form.
+        String text = getParameter(request, "text-input", "");
+        long timestamp = System.currentTimeMillis();
 
-  @Override
-  public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    String text = getParameter(request, "text-input", "");
-    long time = System.currentTimeMillis();
+        Entity taskEntity = new Entity("Comment");
+        taskEntity.setProperty("text", text);
+        taskEntity.setProperty("timestamp", timestamp);
 
-    Entity e = new Entity("Comment");
-    e.setProperty("text", text);
-    e.setProperty("time", time);
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        datastore.put(taskEntity);
 
-    DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-    datastore.put(e);
-
-    response.sendRedirect("/index.html");
-  }
-
-  private String getParameter(HttpServletRequest request, String name, String defaultValue) {
-    String value = request.getParameter(name);
-    if (value == null) {
-      return defaultValue;
+        // Redirect back to the HTML page.
+        response.sendRedirect("/index.html");
     }
-    return value;
-  }
+
+    /**
+     * Converts a ServerStats instance into a JSON string using the Gson library.
+     */
+    private String convertToJson(ArrayList arr) {
+        Gson gson = new Gson();
+        String json = gson.toJson(arr);
+        return json;
+    }
+
+    private String getParameter(HttpServletRequest request, String name, String defaultValue) {
+        String value = request.getParameter(name);
+        if (value == null) {
+        return defaultValue;
+        }
+        return value;
+    }
 }
