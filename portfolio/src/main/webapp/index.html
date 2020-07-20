@@ -42,7 +42,7 @@
     <button onclick="addRandomGreeting()"><p>Click here to get a random greeting:</p></button>
     <p id="greeting-container"></p>
 
-    <!--COMMENTS-->
+
     <h2>Comments</h2>
     <select id="languages" onchange="getComments()">
         <option value="">Original</option>
@@ -50,11 +50,10 @@
         <option value="zh">Chinese</option>
         <option value="fr">French</option>
         <option value="hi">Hindi</option>
-        <option value="ar">Arabic</option>
     </select>
     
     <div id="comments-container"></div>
-    <!--SUBMIT COMMENT-->
+
     <form action="/comments" method="POST">
         <p>Add comment:</p>
         <textarea name="text-input" placeholder="Enter yout comment here"></textarea>

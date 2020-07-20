@@ -32,7 +32,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.io.*; 
 
-/** Servlet that returns some example content. TODO: modify this file to handle comments data */
 @WebServlet("/comments")
 public class DataServlet extends HttpServlet {
     @Override
@@ -43,7 +42,6 @@ public class DataServlet extends HttpServlet {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         PreparedQuery results = datastore.prepare(query);
 
-        // Do the translation.
         Translate translate = TranslateOptions.getDefaultInstance().getService();
 
         ArrayList<String> comments = new ArrayList<>();
@@ -52,7 +50,7 @@ public class DataServlet extends HttpServlet {
             String text = (String) entity.getProperty("text");
             long timestamp = (long) entity.getProperty("timestamp");
             String comment = text;
-            //comments.add(comment);
+            
 
             if(lang.length()>0){
                 Translation translation =
@@ -72,7 +70,7 @@ public class DataServlet extends HttpServlet {
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        // Get the input from the form.
+  
         String text = getParameter(request, "text-input", "");
         long timestamp = System.currentTimeMillis();
 
@@ -83,13 +81,9 @@ public class DataServlet extends HttpServlet {
         DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         datastore.put(taskEntity);
 
-        // Redirect back to the HTML page.
         response.sendRedirect("/index.html");
     }
 
-    /**
-     * Converts a ServerStats instance into a JSON string using the Gson library.
-     */
     private String convertToJson(ArrayList arr) {
         Gson gson = new Gson();
         String json = gson.toJson(arr);

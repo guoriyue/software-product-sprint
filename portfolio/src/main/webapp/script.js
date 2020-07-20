@@ -1,7 +1,7 @@
 
 function addRandomGreeting() {
   const greetings =
-      ['hello', '你好'];
+      ['hello', '你好','hi','你好呀'];
 
   const greeting = greetings[Math.floor(Math.random() * greetings.length)];
 
@@ -26,6 +26,5 @@ function getComments() {
 }
 
 function loadPage(){
-    
     getComments();
 }
